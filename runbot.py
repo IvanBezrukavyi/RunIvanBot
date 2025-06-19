@@ -5,6 +5,7 @@ import schedule
 from datetime import datetime
 from dotenv import load_dotenv
 import telebot
+import pytz
 
 load_dotenv()
 
@@ -20,6 +21,9 @@ if BOT_TOKEN is None:
     raise ValueError("BOT_TOKEN environment variable not set")
 
 bot = telebot.TeleBot(BOT_TOKEN)
+
+# === ЧАСОВА ЗОНА ===
+ukraine_tz = pytz.timezone("Europe/Kyiv")
 
 # === СТАНИ ===
 pushups_count = 13
@@ -47,9 +51,9 @@ def send_welcome(message):
 # === НАГАДУВАННЯ НА БІГ І ВІДТИСКАННЯ ===
 def running_reminder():
     global pushups_count
-    today = datetime.now().strftime("%A")
-    warmup = warmup_links[datetime.now().day % len(warmup_links)]
-    motivation = motivations[datetime.now().day % len(motivations)]
+    now = datetime.now(ukraine_tz)
+    warmup = warmup_links[now.day % len(warmup_links)]
+    motivation = motivations[now.day % len(motivations)]
     bot.send_message(USER_ID,
         f"🏃‍♂️ Час на пробіжку!\n"
         f"🔸 Зроби розминку: {warmup}\n"
@@ -66,22 +70,22 @@ def weight_checkin():
 def mood_checkin():
     bot.send_message(USER_ID, "🧠 Як настрій сьогодні? (від 1 до 10 або короткий опис)")
 
-# === ГРАФІК НА ТИЖДЕНЬ (біг: вт-ср-чт-пт-нд) ===
+# === СУБОТА — ПРОГУЛЯНКА З СИНОМ ===
+def saturday_walk():
+    bot.send_message(USER_ID,
+        "👣 Субота — активне відновлення!\n"
+        "🚶‍♂️ Прогулянка на свіжому повітрі з сином 👶\n"
+        "🌳 Просто ходи 20–40 хв без навантаження.\n"
+        "🎧 Можеш послухати спокійну музику або подкаст.\n\n"
+        "❤️ Турбота про сина — це теж інвестиція у твоє здоров'я!")
+
+# === ГРАФІК НА ТИЖДЕНЬ (усі дні — 18:30 за Україною) ===
 schedule.every().tuesday.at("18:30").do(running_reminder)
 schedule.every().wednesday.at("18:30").do(running_reminder)
 schedule.every().thursday.at("18:30").do(running_reminder)
 schedule.every().friday.at("18:30").do(running_reminder)
+schedule.every().saturday.at("18:30").do(saturday_walk)
 schedule.every().sunday.at("18:30").do(running_reminder)
-
-# === СУБОТА — ПРОГУЛЯНКА З СИНОМ ===
-schedule.every().saturday.at("18:30").do(lambda: bot.send_message(
-    USER_ID,
-    "👣 Субота — активне відновлення!\n"
-    "🚶‍♂️ Прогулянка на свіжому повітрі з сином 👶\n"
-    "🌳 Просто ходи 20–40 хв без навантаження.\n"
-    "🎧 Можеш послухати спокійну музику або подкаст.\n\n"
-    "❤️ Турбота про сина — це теж інвестиція у твоє здоров'я!"
-))
 
 # === ТРЕКЕРИ ===
 schedule.every().monday.at("07:30").do(weight_checkin)
@@ -90,6 +94,7 @@ schedule.every().day.at("20:30").do(mood_checkin)
 # === ПОТОКИ ===
 def run_schedule():
     while True:
+        now = datetime.now(ukraine_tz)
         schedule.run_pending()
         time.sleep(1)
 
