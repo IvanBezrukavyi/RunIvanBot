@@ -6,6 +6,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import telebot
 import pytz
+import tracker
 
 load_dotenv()
 
@@ -54,6 +55,9 @@ def running_reminder():
     now = datetime.now(ukraine_tz)
     warmup = warmup_links[now.day % len(warmup_links)]
     motivation = motivations[now.day % len(motivations)]
+
+    tracker.log_training_day()
+
     bot.send_message(USER_ID,
         f"🏃‍♂️ Час на пробіжку!\n"
         f"🔸 Зроби розминку: {warmup}\n"
@@ -79,13 +83,25 @@ def saturday_walk():
         "🎧 Можеш послухати спокійну музику або подкаст.\n\n"
         "❤️ Турбота про сина — це теж інвестиція у твоє здоров'я!")
 
-# === ГРАФІК НА ТИЖДЕНЬ (усі дні — 18:30 за Україною) ===
+# === ПЕРЕВІРКА ПРОПУЩЕНИХ ДНІВ ===
+def sunday_check():
+    missed = tracker.check_missed_days()
+    if missed:
+        bot.send_message(USER_ID,
+            f"📋 Ти пропустив тренування у: {', '.join(sorted(missed))}\n"
+            f"💡 Спробуй надолужити або розплануй наступний тиждень!")
+    else:
+        bot.send_message(USER_ID, "✅ Усі тренування цього тижня виконано! Чудова робота!")
+    tracker.reset_week_log()
+
+# === ГРАФІК НА ТИЖДЕНЬ ===
 schedule.every().tuesday.at("18:30").do(running_reminder)
 schedule.every().wednesday.at("18:30").do(running_reminder)
 schedule.every().thursday.at("18:30").do(running_reminder)
 schedule.every().friday.at("18:30").do(running_reminder)
 schedule.every().saturday.at("18:30").do(saturday_walk)
 schedule.every().sunday.at("18:30").do(running_reminder)
+schedule.every().sunday.at("21:00").do(sunday_check)
 
 # === ТРЕКЕРИ ===
 schedule.every().monday.at("07:30").do(weight_checkin)
@@ -94,7 +110,6 @@ schedule.every().day.at("20:30").do(mood_checkin)
 # === ПОТОКИ ===
 def run_schedule():
     while True:
-        now = datetime.now(ukraine_tz)
         schedule.run_pending()
         time.sleep(1)
 
