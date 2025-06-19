@@ -1,4 +1,3 @@
-
 from datetime import datetime
 import pytz
 
@@ -55,3 +54,21 @@ def generate_weekly_report_pdf():
 
     pdf.output(report_name)
     return report_name
+
+# Силові тренування (гантелі) для рук
+def strength_reminder():
+    return (
+        "💪 Сьогодні силове тренування на руки з гантелями!\n\n"
+        "🔸 3 підходи по 10–12 повторів:\n"
+        "- Підйом гантелей на біцепс\n"
+        "- Французький жим\n"
+        "- Плечовий жим стоячи\n"
+        "- Тяга до підборіддя\n\n"
+        "🎥 Відео для прикладу (12 хв): https://youtu.be/baii-KM6kS0"
+    )
+
+# Відправка силового нагадування до Telegram
+
+def send_strength_reminder(bot, user_id):
+    message = strength_reminder()
+    bot.send_message(user_id, message)

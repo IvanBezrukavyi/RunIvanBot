@@ -5,7 +5,6 @@ import schedule
 from datetime import datetime
 from dotenv import load_dotenv
 import telebot
-import pytz
 import tracker
 
 load_dotenv()
@@ -23,16 +22,13 @@ if BOT_TOKEN is None:
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# === ЧАСОВА ЗОНА ===
-ukraine_tz = pytz.timezone("Europe/Kyiv")
-
 # === СТАНИ ===
 pushups_count = 13
 
 # === РОЗМИНКА (відео YouTube до 2 хв) ===
 warmup_links = [
-    "https://www.youtube.com/watch?v=Gf7nqxkY0yU",  # 2 хв
-    "https://www.youtube.com/watch?v=nph81YymVqg",  # 1:30 хв
+    "https://youtu.be/HY7Zuo0bybw",  # 2 хв
+    "https://youtu.be/c9M0l3uTJ78",  # 1:30 хв
     "https://www.youtube.com/watch?v=K-CrEi0ymMg",  # 2 хв йога
 ]
 
@@ -52,12 +48,9 @@ def send_welcome(message):
 # === НАГАДУВАННЯ НА БІГ І ВІДТИСКАННЯ ===
 def running_reminder():
     global pushups_count
-    now = datetime.now(ukraine_tz)
-    warmup = warmup_links[now.day % len(warmup_links)]
-    motivation = motivations[now.day % len(motivations)]
-
-    tracker.log_training_day()
-
+    today = datetime.now().strftime("%A")
+    warmup = warmup_links[datetime.now().day % len(warmup_links)]
+    motivation = motivations[datetime.now().day % len(motivations)]
     bot.send_message(USER_ID,
         f"🏃‍♂️ Час на пробіжку!\n"
         f"🔸 Зроби розминку: {warmup}\n"
@@ -65,6 +58,7 @@ def running_reminder():
         f"🔸 Потім — пробіжка!\n\n"
         f"{motivation}")
     pushups_count += 1
+    tracker.log_training_day()
 
 # === ЩОТИЖНЕВИЙ ТРЕКЕР ВАГИ ===
 def weight_checkin():
@@ -74,16 +68,7 @@ def weight_checkin():
 def mood_checkin():
     bot.send_message(USER_ID, "🧠 Як настрій сьогодні? (від 1 до 10 або короткий опис)")
 
-# === СУБОТА — ПРОГУЛЯНКА З СИНОМ ===
-def saturday_walk():
-    bot.send_message(USER_ID,
-        "👣 Субота — активне відновлення!\n"
-        "🚶‍♂️ Прогулянка на свіжому повітрі з сином 👶\n"
-        "🌳 Просто ходи 20–40 хв без навантаження.\n"
-        "🎧 Можеш послухати спокійну музику або подкаст.\n\n"
-        "❤️ Турбота про сина — це теж інвестиція у твоє здоров'я!")
-
-# === ПЕРЕВІРКА ПРОПУЩЕНИХ ДНІВ ===
+# === ЩОТИЖНЕВА ПЕРЕВІРКА + PDF ===
 def sunday_check():
     missed = tracker.check_missed_days()
     if missed:
@@ -92,20 +77,27 @@ def sunday_check():
             f"💡 Спробуй надолужити або розплануй наступний тиждень!")
     else:
         bot.send_message(USER_ID, "✅ Усі тренування цього тижня виконано! Чудова робота!")
+
+    # Звіт PDF
+    report_path = tracker.generate_weekly_report_pdf()
+    with open(report_path, "rb") as pdf_file:
+        bot.send_document(USER_ID, pdf_file)
+
     tracker.reset_week_log()
 
-# === ГРАФІК НА ТИЖДЕНЬ ===
+# === ГРАФІК ===
 schedule.every().tuesday.at("18:30").do(running_reminder)
 schedule.every().wednesday.at("18:30").do(running_reminder)
-schedule.every().thursday.at("18:30").do(running_reminder)
 schedule.every().friday.at("18:30").do(running_reminder)
-schedule.every().saturday.at("18:30").do(saturday_walk)
 schedule.every().sunday.at("18:30").do(running_reminder)
-schedule.every().sunday.at("21:00").do(sunday_check)
 
-# === ТРЕКЕРИ ===
 schedule.every().monday.at("07:30").do(weight_checkin)
 schedule.every().day.at("20:30").do(mood_checkin)
+schedule.every().sunday.at("21:00").do(sunday_check)
+
+# === СИЛОВІ НАГАДУВАННЯ ===
+schedule.every().monday.at("18:30").do(lambda: tracker.send_strength_reminder(bot, USER_ID))
+schedule.every().thursday.at("18:30").do(lambda: tracker.send_strength_reminder(bot, USER_ID))
 
 # === ПОТОКИ ===
 def run_schedule():
