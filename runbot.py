@@ -2,7 +2,7 @@ import os
 import time
 import threading
 import schedule
-from datetime import datetime
+from datetime import datetime, date
 from dotenv import load_dotenv
 import telebot
 import tracker
@@ -24,11 +24,14 @@ bot = telebot.TeleBot(BOT_TOKEN)
 
 # === СТАНИ ===
 pushups_count = 13
+running_days_count = 0
+
+goal_date = date(2025, 9, 15)
 
 # === РОЗМИНКА (відео YouTube до 2 хв) ===
 warmup_links = [
-    "https://youtu.be/HY7Zuo0bybw",  # 2 хв
-    "https://youtu.be/c9M0l3uTJ78",  # 1:30 хв
+    "https://www.youtube.com/watch?v=Gf7nqxkY0yU",  # 2 хв
+    "https://www.youtube.com/watch?v=nph81YymVqg",  # 1:30 хв
     "https://www.youtube.com/watch?v=K-CrEi0ymMg",  # 2 хв йога
 ]
 
@@ -40,6 +43,28 @@ motivations = [
     "✅ Кожне тренування — цеглинка у твоєму новому тілі!",
 ]
 
+# === ІНТЕРВАЛИ ТА ДИСТАНЦІЯ ===
+def get_interval_plan():
+    today = date.today()
+    days_left = (goal_date - today).days
+
+    if days_left > 70:
+        return "1 хв біг / 1 хв хода × 6 раундів (~1.5 км)"
+    elif days_left > 50:
+        return "2 хв біг / 1 хв хода × 6 раундів (~2.5 км)"
+    elif days_left > 35:
+        return "5 хв біг / 1 хв хода × 4 раунди (~3.5 км)"
+    elif days_left > 21:
+        return "10 хв біг / 1 хв хода × 3 раунди (~5.5 км)"
+    elif days_left > 10:
+        return "Біжи без зупинки у комфортному темпі (~7 км)"
+    elif days_left > 1:
+        return "Пробіжка на ~8-9 км у темпі змагання, фінальне навантаження"
+    elif days_left == 1:
+        return "🎯 Завтра змагання! Легка пробіжка або повний відпочинок. Підготуй форму, воду і план темпу."
+    else:
+        return "🏁 Сьогодні змагання! Довіряй підготовці, ти готовий пробігти 10 км! 💥"
+
 # === ОСНОВНІ КОМАНДИ ===
 @bot.message_handler(commands=['start', 'test'])
 def send_welcome(message):
@@ -47,17 +72,30 @@ def send_welcome(message):
 
 # === НАГАДУВАННЯ НА БІГ І ВІДТИСКАННЯ ===
 def running_reminder():
-    global pushups_count
-    today = datetime.now().strftime("%A")
+    global pushups_count, running_days_count
     warmup = warmup_links[datetime.now().day % len(warmup_links)]
     motivation = motivations[datetime.now().day % len(motivations)]
+    intervals = get_interval_plan()
+    days_left = (goal_date - date.today()).days
+
     bot.send_message(USER_ID,
-        f"🏃‍♂️ Час на пробіжку!\n"
-        f"🔸 Зроби розминку: {warmup}\n"
-        f"🔸 Відтиснись {pushups_count} раз(ів)\n"
-        f"🔸 Потім — пробіжка!\n\n"
+        f"🏃‍♂️ Час на пробіжку!
+"
+        f"🔸 Залишилось {days_left} днів до 10 км
+"
+        f"🔸 Зроби розминку: {warmup}
+"
+        f"🔸 Відтиснись {pushups_count} раз(ів)
+"
+        f"🔸 Біг сьогодні: {intervals}
+"
+        f"🔸 Оптимальний темп: 7:45–8:30 хв/км (зона жироспалення)
+
+"
         f"{motivation}")
+
     pushups_count += 1
+    running_days_count += 1
     tracker.log_training_day()
 
 # === ЩОТИЖНЕВИЙ ТРЕКЕР ВАГИ ===
@@ -78,7 +116,6 @@ def sunday_check():
     else:
         bot.send_message(USER_ID, "✅ Усі тренування цього тижня виконано! Чудова робота!")
 
-    # Звіт PDF
     report_path = tracker.generate_weekly_report_pdf()
     with open(report_path, "rb") as pdf_file:
         bot.send_document(USER_ID, pdf_file)
@@ -95,7 +132,6 @@ schedule.every().monday.at("07:30").do(weight_checkin)
 schedule.every().day.at("20:30").do(mood_checkin)
 schedule.every().sunday.at("21:00").do(sunday_check)
 
-# === СИЛОВІ НАГАДУВАННЯ ===
 schedule.every().monday.at("18:30").do(lambda: tracker.send_strength_reminder(bot, USER_ID))
 schedule.every().thursday.at("18:30").do(lambda: tracker.send_strength_reminder(bot, USER_ID))
 
