@@ -86,7 +86,6 @@ def get_interval_plan():
 def send_welcome(message):
     bot.reply_to(message, "🤖 Бот активний! Готовий допомагати тобі в тренуваннях.")
 
-# === НАГАДУВАННЯ НА БІГ І ВІДТИСКАННЯ ===
 def running_reminder():
     global pushups_count, running_days_count
     warmup = warmup_links[datetime.now().day % len(warmup_links)]
@@ -131,20 +130,17 @@ def sunday_check():
 
     tracker.reset_week_log()
 
-# === ГРАФІК ===
-schedule.every().tuesday.at("18:30").do(running_reminder)
-schedule.every().wednesday.at("18:30").do(running_reminder)
-schedule.every().friday.at("18:30").do(running_reminder)
-schedule.every().sunday.at("18:30").do(running_reminder)
+schedule.every().monday.at("15:30").do(lambda: tracker.send_strength_reminder(bot, USER_ID))
+schedule.every().tuesday.at("15:30").do(running_reminder)
+schedule.every().wednesday.at("15:30").do(running_reminder)
+schedule.every().thursday.at("15:30").do(lambda: tracker.send_strength_reminder(bot, USER_ID))
+schedule.every().friday.at("15:30").do(running_reminder)
+schedule.every().sunday.at("15:30").do(running_reminder)
 
-schedule.every().monday.at("07:30").do(weight_checkin)
-schedule.every().day.at("20:30").do(mood_checkin)
-schedule.every().sunday.at("21:00").do(sunday_check)
+schedule.every().monday.at("04:30").do(weight_checkin)
+schedule.every().day.at("17:30").do(mood_checkin)
+schedule.every().sunday.at("18:00").do(sunday_check)
 
-schedule.every().monday.at("18:30").do(lambda: tracker.send_strength_reminder(bot, USER_ID))
-schedule.every().thursday.at("18:30").do(lambda: tracker.send_strength_reminder(bot, USER_ID))
-
-# === ПОТОКИ ===
 def run_schedule():
     while True:
         schedule.run_pending()
