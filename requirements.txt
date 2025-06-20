@@ -1,0 +1,7 @@
+
+python-dotenv
+flask
+requests
+pyTelegramBotAPI
+schedule
+pytz
