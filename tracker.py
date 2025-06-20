@@ -1,7 +1,7 @@
 from datetime import datetime
 import pytz
+from fpdf import FPDF
 
-# Часова зона України
 ukraine_tz = pytz.timezone("Europe/Kyiv")
 
 # Дні тижня, в які планується біг
@@ -68,7 +68,6 @@ def strength_reminder():
     )
 
 # Відправка силового нагадування до Telegram
-
 def send_strength_reminder(bot, user_id):
     message = strength_reminder()
     bot.send_message(user_id, message)

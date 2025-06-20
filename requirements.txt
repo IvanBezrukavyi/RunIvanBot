@@ -1,7 +1,6 @@
 
 python-dotenv
-flask
-requests
 pyTelegramBotAPI
 schedule
 pytz
+fpdf
