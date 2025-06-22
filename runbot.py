@@ -81,8 +81,8 @@ def send_welcome(message):
 # === НАГАДУВАННЯ ===
 def running_reminder():
     global pushups_count, running_days_count
-    warmup = warmup_links[datetime.now().day % len(warmup_links)]
-    motivation = motivations[datetime.now().day % len(motivations)]
+    warmup = warmup_links[local_time().day % len(warmup_links)]
+    motivation = motivations[local_time().day % len(motivations)]
     intervals = get_interval_plan()
     days_left = (goal_date - date.today()).days
 
