@@ -1,26 +1,13 @@
 import os
 import time
 import threading
-import schedule
 from datetime import datetime, date
+import schedule
 from dotenv import load_dotenv
 import telebot
-import tracker
+import pytz
 from flask import Flask
-
-# === FLASK SERVER ДЛЯ ПІНГЕРА ===
-app = Flask('')
-
-@app.route('/')
-def home():
-    return "Bot is alive!"
-
-def run():
-    app.run(host='0.0.0.0', port=3000)
-
-def keep_alive():
-    t = threading.Thread(target=run)
-    t.start()
+import tracker
 
 # === БАЗОВЕ НАЛАШТУВАННЯ ===
 load_dotenv()
@@ -37,18 +24,18 @@ if BOT_TOKEN is None:
     raise ValueError("BOT_TOKEN environment variable not set")
 
 bot = telebot.TeleBot(BOT_TOKEN)
+app = Flask(__name__)
 
 # === СТАНИ ===
 pushups_count = 13
 running_days_count = 0
-
 goal_date = date(2025, 9, 15)
 
-# === РОЗМИНКА (відео YouTube до 2 хв) ===
+# === РОЗМИНКА ===
 warmup_links = [
-    "https://www.youtube.com/watch?v=Gf7nqxkY0yU",  # 2 хв
-    "https://www.youtube.com/watch?v=nph81YymVqg",  # 1:30 хв
-    "https://www.youtube.com/watch?v=K-CrEi0ymMg",  # 2 хв йога
+    "https://www.youtube.com/watch?v=Gf7nqxkY0yU",
+    "https://www.youtube.com/watch?v=nph81YymVqg",
+    "https://www.youtube.com/watch?v=K-CrEi0ymMg",
 ]
 
 # === МОТИВАЦІЯ ===
@@ -59,7 +46,12 @@ motivations = [
     "✅ Кожне тренування — цеглинка у твоєму новому тілі!",
 ]
 
-# === ІНТЕРВАЛИ ТА ДИСТАНЦІЯ ===
+# === ЧАС КИЄВА ===
+def local_time():
+    tz = pytz.timezone("Europe/Kyiv")
+    return datetime.now(tz)
+
+# === ІНТЕРВАЛИ ===
 def get_interval_plan():
     today = date.today()
     days_left = (goal_date - today).days
@@ -81,12 +73,12 @@ def get_interval_plan():
     else:
         return "🏁 Сьогодні змагання! Довіряй підготовці, ти готовий пробігти 10 км! 💥"
 
-# === ОСНОВНІ КОМАНДИ ===
+# === КОМАНДИ ===
 @bot.message_handler(commands=['start', 'test'])
 def send_welcome(message):
     bot.reply_to(message, "🤖 Бот активний! Готовий допомагати тобі в тренуваннях.")
 
-# === НАГАДУВАННЯ НА БІГ І ВІДТИСКАННЯ ===
+# === НАГАДУВАННЯ ===
 def running_reminder():
     global pushups_count, running_days_count
     warmup = warmup_links[datetime.now().day % len(warmup_links)]
@@ -107,15 +99,20 @@ def running_reminder():
     running_days_count += 1
     tracker.log_training_day()
 
-# === ЩОТИЖНЕВИЙ ТРЕКЕР ВАГИ ===
 def weight_checkin():
     bot.send_message(USER_ID, "⚖️ Час зважування! Вкажи свою вагу у кг.")
 
-# === НАСТРІЙ ===
 def mood_checkin():
     bot.send_message(USER_ID, "🧠 Як настрій сьогодні? (від 1 до 10 або короткий опис)")
 
-# === ЩОТИЖНЕВА ПЕРЕВІРКА + PDF ===
+def sleep_checkin():
+    bot.send_message(USER_ID, "🛌 Скільки ти спав у середньому цього тижня?")
+
+def goal_motivation():
+    today = local_time()
+    days_left = (goal_date - today.date()).days
+    bot.send_message(USER_ID, f"📅 До забігу залишилось {days_left} днів! Пам'ятай, твоя мета — пробігти 10 км. \n💥 Ти вже близько до фінішу!")
+
 def sunday_check():
     missed = tracker.check_missed_days()
     if missed:
@@ -131,18 +128,18 @@ def sunday_check():
 
     tracker.reset_week_log()
 
-# === ГРАФІК ===
+# === РОЗКЛАД ===
 schedule.every().tuesday.at("18:30").do(running_reminder)
 schedule.every().wednesday.at("18:30").do(running_reminder)
 schedule.every().friday.at("18:30").do(running_reminder)
 schedule.every().sunday.at("18:30").do(running_reminder)
-
-schedule.every().monday.at("07:30").do(weight_checkin)
+schedule.every().monday.at("08:30").do(weight_checkin)
 schedule.every().day.at("20:30").do(mood_checkin)
 schedule.every().sunday.at("21:00").do(sunday_check)
-
 schedule.every().monday.at("18:30").do(lambda: tracker.send_strength_reminder(bot, USER_ID))
 schedule.every().thursday.at("18:30").do(lambda: tracker.send_strength_reminder(bot, USER_ID))
+schedule.every().day.at("08:00").do(goal_motivation)
+schedule.every().saturday.at("20:00").do(sleep_checkin)
 
 # === ПОТОКИ ===
 def run_schedule():
@@ -150,13 +147,16 @@ def run_schedule():
         schedule.run_pending()
         time.sleep(1)
 
-# === ЗАПУСК ===
-keep_alive()
 threading.Thread(target=run_schedule, daemon=True).start()
 
-while True:
-    try:
-        bot.polling(none_stop=True)
-    except Exception as e:
-        print(f"Bot polling error: {e}")
-        time.sleep(5)
+# === FLASK WEBHOOK ===
+@app.route('/')
+def home():
+    return "🏃‍♂️ RunBot is alive!"
+
+@app.route('/ping', methods=['GET'])
+def ping():
+    return {"status": "ok"}, 200
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=3000)
