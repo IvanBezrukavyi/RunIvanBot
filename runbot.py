@@ -9,6 +9,20 @@ import pytz
 from flask import Flask
 import tracker
 
+# === FLASK SERVER ДЛЯ ПІНГЕРА ===More actions
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot is alive!"
+
+def run():
+    app.run(host='0.0.0.0', port=3000)
+
+def keep_alive():
+    t = threading.Thread(target=run)
+    t.start()
+
 # === БАЗОВЕ НАЛАШТУВАННЯ ===
 load_dotenv()
 
@@ -145,16 +159,12 @@ def run_schedule():
         schedule.run_pending()
         time.sleep(1)
 
-# === FLASK SERVER ДЛЯ ПІНГЕРА ===More actions
-app = Flask('')
+# === ЗАПУСК ===
+keep_alive()
+threading.Thread(target=run_schedule, daemon=True).start()
 
-@app.route('/')
-def home():
-    return "Bot is alive!"
-
-def run():
-    app.run(host='0.0.0.0', port=3000)
-
-def keep_alive():
-    t = threading.Thread(target=run)
-    t.start()
+while True:
+    try:
+        bot.polling(none_stop=True)
+    except Exception as e:
+        print(f"Bot polling error: {e}")
