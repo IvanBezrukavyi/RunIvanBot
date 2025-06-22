@@ -141,7 +141,6 @@ schedule.every().thursday.at("18:30").do(lambda: tracker.send_strength_reminder(
 schedule.every().day.at("08:00").do(goal_motivation)
 schedule.every().saturday.at("20:00").do(sleep_checkin)
 
-# === ПОТОКИ ===
 def run_schedule():
     while True:
         schedule.run_pending()
