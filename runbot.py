@@ -24,7 +24,6 @@ if BOT_TOKEN is None:
     raise ValueError("BOT_TOKEN environment variable not set")
 
 bot = telebot.TeleBot(BOT_TOKEN)
-app = Flask(__name__)
 
 # === СТАНИ ===
 pushups_count = 13
@@ -145,6 +144,8 @@ def run_schedule():
     while True:
         schedule.run_pending()
         time.sleep(1)
+
+# === FLASK SERVER ДЛЯ ПІНГЕРА ===More actions
 app = Flask('')
 
 @app.route('/')
