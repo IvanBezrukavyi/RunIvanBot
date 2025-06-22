@@ -145,17 +145,15 @@ def run_schedule():
     while True:
         schedule.run_pending()
         time.sleep(1)
+app = Flask('')
 
-threading.Thread(target=run_schedule, daemon=True).start()
-
-# === FLASK WEBHOOK ===
 @app.route('/')
 def home():
-    return "🏃‍♂️ RunBot is alive!"
+    return "Bot is alive!"
 
-@app.route('/ping', methods=['GET'])
-def ping():
-    return {"status": "ok"}, 200
-
-if __name__ == '__main__':
+def run():
     app.run(host='0.0.0.0', port=3000)
+
+def keep_alive():
+    t = threading.Thread(target=run)
+    t.start()
