@@ -144,22 +144,27 @@ def sleep_checkin():
 def goal_motivation():
     today = local_time()
     days_left = (goal_date - today.date()).days
-    bot.send_message(USER_ID, f"📅 До забігу залишилось {days_left} днів! Пам'ятай, твоя мета — пробігти 10 км. 
-💥 Ти вже близько до фінішу!")
+    bot.send_message(
+        USER_ID,
+        f"📅 До забігу залишилось {days_left} днів! "
+        f"Пам'ятай, твоя мета — пробігти 10 км.\n"
+        f"💥 Ти вже близько до фінішу!"
+    )
 
 def sunday_check():
     missed = tracker.check_missed_days()
     if missed:
-        bot.send_message(USER_ID,
-            f"📋 Ти пропустив тренування у: {', '.join(sorted(missed))}
-"
-            f"💡 Спробуй надолужити або розплануй наступний тиждень!")
-    else:
-        bot.send_message(USER_ID, "✅ Усі тренування цього тижня виконано! Чудова робота!")
+    bot.send_message(
+        USER_ID,
+        f"📋 Ти пропустив тренування у: {', '.join(sorted(missed))}\n"
+        f"💡 Спробуй надолужити або розплануй наступний тиждень!"
+    )
+else:
+    bot.send_message(USER_ID, "✅ Усі тренування цього тижня виконано! Чудова робота!")
 
-    report_path = tracker.generate_weekly_report_pdf()
-    with open(report_path, "rb") as pdf_file:
-        bot.send_document(USER_ID, pdf_file)
+report_path = tracker.generate_weekly_report_pdf()
+with open(report_path, "rb") as pdf_file:
+    bot.send_document(USER_ID, pdf_file)
 
     tracker.reset_week_log()
 
