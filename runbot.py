@@ -5,7 +5,7 @@ from datetime import datetime, date
 import schedule
 from dotenv import load_dotenv
 import telebot
-from telebot import apihelper
+from telebot.util import SafeRequest
 import pytz
 from flask import Flask
 import tracker
@@ -38,7 +38,8 @@ except ValueError as exc:
 if BOT_TOKEN is None:
     raise ValueError("BOT_TOKEN environment variable not set")
 
-bot = telebot.TeleBot(BOT_TOKEN, request=apihelper.SafeRequest(ssl_context=ssl._create_unverified_context()))
+bot = telebot.TeleBot(BOT_TOKEN, request=SafeRequest(ssl_context=ssl._create_unverified_context()))
+
 
 # === СТАНИ ===
 pushups_count = 13
