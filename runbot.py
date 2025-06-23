@@ -154,17 +154,17 @@ def sunday_check():
     tracker.reset_week_log()
 
 # === РОЗКЛАД ===
-schedule.every().tuesday.at("18:30").do(running_reminder)
-schedule.every().wednesday.at("18:30").do(running_reminder)
-schedule.every().friday.at("18:30").do(running_reminder)
-schedule.every().sunday.at("18:30").do(running_reminder)
-schedule.every().monday.at("08:30").do(weight_checkin)
-schedule.every().day.at("20:30").do(mood_checkin)
-schedule.every().sunday.at("21:00").do(sunday_check)
-schedule.every().monday.at("18:30").do(lambda: tracker.send_strength_reminder(bot, USER_ID))
-schedule.every().thursday.at("18:30").do(lambda: tracker.send_strength_reminder(bot, USER_ID))
-schedule.every().day.at("08:00").do(goal_motivation)
-schedule.every().saturday.at("20:00").do(sleep_checkin)
+schedule.every().tuesday.at("15:30").do(running_reminder)
+schedule.every().wednesday.at("15:30").do(running_reminder)
+schedule.every().friday.at("15:30").do(running_reminder)
+schedule.every().sunday.at("15:30").do(running_reminder)
+schedule.every().monday.at("05:30").do(weight_checkin)
+schedule.every().day.at("17:30").do(mood_checkin)
+schedule.every().sunday.at("18:00").do(sunday_check)
+schedule.every().monday.at("15:30").do(lambda: tracker.send_strength_reminder(bot, USER_ID))
+schedule.every().thursday.at("15:30").do(lambda: tracker.send_strength_reminder(bot, USER_ID))
+schedule.every().day.at("05:00").do(goal_motivation)
+schedule.every().saturday.at("17:00").do(sleep_checkin)
 
 # === НОВІ НАГАДУВАННЯ ===
 def run_interval_reminder():
