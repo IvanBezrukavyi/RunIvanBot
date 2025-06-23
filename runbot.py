@@ -149,7 +149,7 @@ def goal_motivation():
 def sunday_check():
     missed = tracker.check_missed_days()
     if missed:
-    bot.send_message(
+        bot.send_message(
         USER_ID,
         f"📋 Ти пропустив тренування у: {', '.join(sorted(missed))}\n"
         f"💡 Спробуй надолужити або розплануй наступний тиждень!"
