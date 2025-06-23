@@ -10,16 +10,20 @@ scheduled_days = {"Tuesday", "Wednesday", "Thursday", "Friday", "Sunday"}
 # Список успішних днів (лог)
 running_log = set()
 
+
 def log_training_day():
     today = datetime.now(ukraine_tz).strftime("%A")
     running_log.add(today)
+
 
 def check_missed_days():
     missed = scheduled_days - running_log
     return missed
 
+
 def reset_week_log():
     running_log.clear()
+
 
 # Створити PDF-звіт тижня
 def generate_weekly_report_pdf():
@@ -55,6 +59,7 @@ def generate_weekly_report_pdf():
     pdf.output(report_name)
     return report_name
 
+
 # Силові тренування (гантелі) для рук
 def strength_reminder():
     return (
@@ -66,6 +71,7 @@ def strength_reminder():
         "- Тяга до підборіддя\n\n"
         "🎥 Відео для прикладу (12 хв): https://youtu.be/baii-KM6kS0"
     )
+
 
 # Відправка силового нагадування до Telegram
 def send_strength_reminder(bot, user_id):

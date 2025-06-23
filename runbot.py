@@ -178,12 +178,16 @@ def sunday_check():
             int(USER_ID), "✅ Усі тренування цього тижня виконано! Чудова робота!"
         )
 
-
-report_path = tracker.generate_weekly_report_pdf()
-with open(report_path, "rb") as pdf_file:
-    bot.send_document(USER_ID, pdf_file)
-
+    # Generate and send weekly report, then reset log
+    report_path = tracker.generate_weekly_report_pdf()
+    with open(report_path, "rb") as pdf_file:
+        bot.send_document(int(USER_ID), pdf_file)
     tracker.reset_week_log()
+
+def send_weekly_report():
+    report_path = tracker.generate_weekly_report_pdf()
+    with open(report_path, "rb") as pdf_file:
+        bot.send_document(int(USER_ID), pdf_file)
 
 schedule.every().tuesday.at("15:30").do(running_reminder)
 schedule.every().wednesday.at("15:30").do(running_reminder)
@@ -192,6 +196,7 @@ schedule.every().sunday.at("15:30").do(running_reminder)
 schedule.every().monday.at("05:30").do(weight_checkin)
 schedule.every().day.at("17:30").do(mood_checkin)
 schedule.every().sunday.at("18:00").do(sunday_check)
+schedule.every().sunday.at("18:05").do(send_weekly_report)
 schedule.every().monday.at("15:30").do(
     lambda: tracker.send_strength_reminder(bot, USER_ID)
 )
