@@ -1,7 +1,7 @@
 
-python-dotenv
-pyTelegramBotAPI
-schedule
-pytz
-fpdf
-Flask
+python-dotenv>=1.0.0
+pyTelegramBotAPI>=4.12.0
+schedule>=1.2.0
+pytz>=2023.3
+fpdf>=1.7.2
+Flask>=2.0.0
