@@ -9,7 +9,7 @@ import pytz
 from flask import Flask
 import tracker
 
-# === FLASK SERVER ДЛЯ ПІНГЕРА ===More actions
+# === FLASK SERVER ДЛЯ ПІНГЕРА ===
 app = Flask('')
 
 @app.route('/')
@@ -59,6 +59,15 @@ motivations = [
     "✅ Кожне тренування — цеглинка у твоєму новому тілі!",
 ]
 
+# === ТЕХНІКА БІГУ ===
+running_tips = [
+    "👣 Твоя стопа має торкатися землі під центром ваги. Уникай приземлення на п’яту.",
+    "🦵 Збільш каденс: ціль — 170–180 кроків/хв для кращої ефективності.",
+    "👐 Тримай руки зігнутими під 90°, не затискай кулаки — це допомагає розслабитись.",
+    "📏 Погляд уперед, корпус трохи нахилений — це допомагає бігти економніше.",
+    "💨 Дихай глибоко, через ніс або рот, ритмічно: 2 вдихи — 2 видихи."
+]
+
 # === ЧАС КИЄВА ===
 def local_time():
     tz = pytz.timezone("Europe/Kyiv")
@@ -96,6 +105,7 @@ def running_reminder():
     global pushups_count, running_days_count
     warmup = warmup_links[local_time().day % len(warmup_links)]
     motivation = motivations[local_time().day % len(motivations)]
+    tip = running_tips[local_time().day % len(running_tips)]
     intervals = get_interval_plan()
     days_left = (goal_date - date.today()).days
 
@@ -105,13 +115,15 @@ def running_reminder():
         f"🔸 Зроби розминку: {warmup}\n"
         f"🔸 Відтиснись {pushups_count} раз(ів)\n"
         f"🔸 Біг сьогодні: {intervals}\n"
-        f"🔸 Оптимальний темп: 7:45–8:30 хв/км (зона жироспалення)\n\n"
+        f"🔸 Оптимальний темп: 7:45–8:30 хв/км (зона жироспалення)\n"
+        f"🔸 Порада дня: {tip}\n\n"
         f"{motivation}")
 
     pushups_count += 1
     running_days_count += 1
     tracker.log_training_day()
 
+# === ІНШІ НАГАДУВАННЯ ===
 def weight_checkin():
     bot.send_message(USER_ID, "⚖️ Час зважування! Вкажи свою вагу у кг.")
 
@@ -154,12 +166,12 @@ schedule.every().thursday.at("18:30").do(lambda: tracker.send_strength_reminder(
 schedule.every().day.at("08:00").do(goal_motivation)
 schedule.every().saturday.at("20:00").do(sleep_checkin)
 
+# === ЗАПУСК ===
 def run_schedule():
     while True:
         schedule.run_pending()
         time.sleep(1)
 
-# === ЗАПУСК ===
 keep_alive()
 threading.Thread(target=run_schedule, daemon=True).start()
 
