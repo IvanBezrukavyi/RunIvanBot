@@ -5,7 +5,10 @@ from datetime import datetime, date
 import schedule
 from dotenv import load_dotenv
 import telebot
-from telebot.util import SafeRequest
+import urllib3
+import ssl
+from telebot import apihelper
+import ssl
 import pytz
 from flask import Flask
 import tracker
@@ -38,8 +41,16 @@ except ValueError as exc:
 if BOT_TOKEN is None:
     raise ValueError("BOT_TOKEN environment variable not set")
 
-bot = telebot.TeleBot(BOT_TOKEN, request=SafeRequest(ssl_context=ssl._create_unverified_context()))
 
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
+apihelper._urllib3_pool_manager = urllib3.PoolManager(
+    num_pools=4,
+    ssl_context=ctx,
+    cert_reqs='CERT_NONE'
+)
+bot = telebot.TeleBot(BOT_TOKEN)
 
 # === СТАНИ ===
 pushups_count = 13
@@ -70,12 +81,10 @@ running_tips = [
     "💨 Дихай глибоко, через ніс або рот, ритмічно: 2 вдихи — 2 видихи."
 ]
 
-# === ЧАС КИЄВА ===
 def local_time():
     tz = pytz.timezone("Europe/Kyiv")
     return datetime.now(tz)
 
-# === ІНТЕРВАЛИ ===
 def get_interval_plan():
     today = date.today()
     days_left = (goal_date - today).days
@@ -97,12 +106,10 @@ def get_interval_plan():
     else:
         return "🏁 Сьогодні змагання! Довіряй підготовці, ти готовий пробігти 10 км! 💥"
 
-# === КОМАНДИ ===
 @bot.message_handler(commands=['start', 'test'])
 def send_welcome(message):
     bot.reply_to(message, "🤖 Бот активний! Готовий допомагати тобі в тренуваннях.")
 
-# === НАГАДУВАННЯ ===
 def running_reminder():
     global pushups_count, running_days_count
     warmup = warmup_links[local_time().day % len(warmup_links)]
@@ -112,20 +119,19 @@ def running_reminder():
     days_left = (goal_date - date.today()).days
 
     bot.send_message(USER_ID,
-        f"🏃‍♂️ Час на пробіжку!\n"
-        f"🔸 Залишилось {days_left} днів до 10 км\n"
-        f"🔸 Зроби розминку: {warmup}\n"
-        f"🔸 Відтиснись {pushups_count} раз(ів)\n"
-        f"🔸 Біг сьогодні: {intervals}\n"
-        f"🔸 Оптимальний темп: 7:45–8:30 хв/км (зона жироспалення)\n"
-        f"🔸 Порада дня: {tip}\n\n"
+        f"🏃‍♂️ Час на пробіжку!"
+        f"🔸 Залишилось {days_left} днів до 10 км"
+        f"🔸 Зроби розминку: {warmup}"
+        f"🔸 Відтиснись {pushups_count} раз(ів)"
+        f"🔸 Біг сьогодні: {intervals}"
+        f"🔸 Оптимальний темп: 7:45–8:30 хв/км (зона жироспалення)"
+        f"🔸 Порада дня: {tip}"
         f"{motivation}")
 
     pushups_count += 1
     running_days_count += 1
     tracker.log_training_day()
 
-# === ІНШІ НАГАДУВАННЯ ===
 def weight_checkin():
     bot.send_message(USER_ID, "⚖️ Час зважування! Вкажи свою вагу у кг.")
 
@@ -138,13 +144,15 @@ def sleep_checkin():
 def goal_motivation():
     today = local_time()
     days_left = (goal_date - today.date()).days
-    bot.send_message(USER_ID, f"📅 До забігу залишилось {days_left} днів! Пам'ятай, твоя мета — пробігти 10 км. \n💥 Ти вже близько до фінішу!")
+    bot.send_message(USER_ID, f"📅 До забігу залишилось {days_left} днів! Пам'ятай, твоя мета — пробігти 10 км. 
+💥 Ти вже близько до фінішу!")
 
 def sunday_check():
     missed = tracker.check_missed_days()
     if missed:
         bot.send_message(USER_ID,
-            f"📋 Ти пропустив тренування у: {', '.join(sorted(missed))}\n"
+            f"📋 Ти пропустив тренування у: {', '.join(sorted(missed))}
+"
             f"💡 Спробуй надолужити або розплануй наступний тиждень!")
     else:
         bot.send_message(USER_ID, "✅ Усі тренування цього тижня виконано! Чудова робота!")
@@ -155,7 +163,6 @@ def sunday_check():
 
     tracker.reset_week_log()
 
-# === РОЗКЛАД ===
 schedule.every().tuesday.at("15:30").do(running_reminder)
 schedule.every().wednesday.at("15:30").do(running_reminder)
 schedule.every().friday.at("15:30").do(running_reminder)
@@ -168,34 +175,31 @@ schedule.every().thursday.at("15:30").do(lambda: tracker.send_strength_reminder(
 schedule.every().day.at("05:00").do(goal_motivation)
 schedule.every().saturday.at("17:00").do(sleep_checkin)
 
-# === НОВІ НАГАДУВАННЯ ===
 def run_interval_reminder():
     bot.send_message(USER_ID,
-        "🔁 **Сьогодні — інтервальне тренування**\n"
-        "⭐️ 5×3 хв біг у темпі *6:00/км*\n"
-        "⭐️ Відпочинок — 2 хв ходьби між інтервалами\n"
-        "⭐️ Розминка: 10 хв (швидка ходьба + легкий біг)\n"
-        "⭐️ Заминка: 5–10 хв (ходьба + розтяжка)\n\n"
-        "🌟 Тримай каденс *165–170 кроків/хв*\n"
-        "🧠 Фокус: короткі кроки, дихай ритмічно (2:2)\n"
+        "🔁 **Сьогодні — інтервальне тренування**"
+        "⭐️ 5×3 хв біг у темпі *6:00/км*"
+        "⭐️ Відпочинок — 2 хв ходьби між інтервалами"
+        "⭐️ Розминка: 10 хв (швидка ходьба + легкий біг)"
+        "⭐️ Заминка: 5–10 хв (ходьба + розтяжка)"
+        "🌟 Тримай каденс *165–170 кроків/хв*"
+        "🧠 Фокус: короткі кроки, дихай ритмічно (2:2)"
         "📹 Відео по техніці: https://youtu.be/GDj34zHAe4k")
 
 def run_tempo_reminder():
     bot.send_message(USER_ID,
-        "🚀 **Сьогодні — темповий біг**\n"
-        "⭐️ 3×8 хв у темпі *6:15–6:30/км*\n"
-        "⭐️ Відновлення: 3 хв між сегментами (повільний біг або ходьба)\n"
-        "⭐️ Розминка: 10 хв біг/ходьба\n"
-        "⭐️ Заминка: 10 хв стретчинг\n\n"
-        "📈 Пульс: 155–165 уд/хв (порогова зона)\n"
-        "🧠 Фокус: рівний темп, стабільне дихання\n"
+        "🚀 **Сьогодні — темповий біг**"
+        "⭐️ 3×8 хв у темпі *6:15–6:30/км*"
+        "⭐️ Відновлення: 3 хв між сегментами (повільний біг або ходьба)"
+        "⭐️ Розминка: 10 хв біг/ходьба"
+        "⭐️ Заминка: 10 хв стретчинг"
+        "📈 Пульс: 155–165 уд/хв (порогова зона)"
+        "🧠 Фокус: рівний темп, стабільне дихання"
         "📹 Техніка бігу: https://youtu.be/PC1N1AfS5n8")
 
-# === РОЗКЛАД ДОПОВНЕННЯ ===
 schedule.every().tuesday.at("18:15").do(run_interval_reminder)
 schedule.every().wednesday.at("18:15").do(run_tempo_reminder)
 
-# === ЗАПУСК ===
 def run_schedule():
     while True:
         schedule.run_pending()
