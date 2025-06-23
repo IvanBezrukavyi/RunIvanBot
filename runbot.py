@@ -144,12 +144,7 @@ def sleep_checkin():
 def goal_motivation():
     today = local_time()
     days_left = (goal_date - today.date()).days
-    bot.send_message(
-        USER_ID,
-        f"📅 До забігу залишилось {days_left} днів! "
-        f"Пам'ятай, твоя мета — пробігти 10 км.\n"
-        f"💥 Ти вже близько до фінішу!"
-    )
+    bot.send_message(USER_ID, (f"📅 До забігу залишилось {days_left} днів! "f"Пам'ятай, твоя мета — пробігти 10 км.\n💥 Ти вже близько до фінішу!"))
 
 def sunday_check():
     missed = tracker.check_missed_days()
