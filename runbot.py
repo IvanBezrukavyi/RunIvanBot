@@ -145,8 +145,8 @@ def weight_checkin():
     bot.send_message(USER_ID, "⚖️ Час зважування! Вкажи свою вагу у кг.")
 
 
-def mood_checkin():
-    bot.send_message(USER_ID, "🧠 Як настрій сьогодні? (від 1 до 10 або короткий опис)")
+def remind_to_log_training():
+    bot.send_message(USER_ID, "📊 Не забудь внести показники тренування!")
 
 
 def sleep_checkin():
@@ -194,7 +194,7 @@ schedule.every().wednesday.at("15:30").do(running_reminder)
 schedule.every().friday.at("15:30").do(running_reminder)
 schedule.every().sunday.at("15:30").do(running_reminder)
 schedule.every().monday.at("05:30").do(weight_checkin)
-schedule.every().day.at("17:30").do(mood_checkin)
+schedule.every().day.at("16:30").do(remind_to_log_training)
 schedule.every().sunday.at("18:00").do(sunday_check)
 schedule.every().sunday.at("18:05").do(send_weekly_report)
 schedule.every().monday.at("15:30").do(
@@ -235,8 +235,8 @@ def run_tempo_reminder():
     )
 
 
-schedule.every().tuesday.at("18:15").do(run_interval_reminder)
-schedule.every().wednesday.at("18:15").do(run_tempo_reminder)
+schedule.every().tuesday.at("15:30").do(run_interval_reminder)
+schedule.every().wednesday.at("15:30").do(run_tempo_reminder)
 
 
 def run_schedule():
